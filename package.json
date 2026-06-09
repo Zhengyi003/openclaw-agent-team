@@ -1,0 +1,87 @@
+{
+  "name": "@zhengyi003/openclaw-agent-team",
+  "version": "0.1.0",
+  "private": false,
+  "description": "OpenClaw Agent Team plugin for Thou iOS channel workflows",
+  "license": "Apache-2.0",
+  "author": "Lizhengyi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zhengyi003/openclaw-agent-team.git"
+  },
+  "homepage": "https://github.com/Zhengyi003/openclaw-agent-team#readme",
+  "bugs": {
+    "url": "https://github.com/Zhengyi003/openclaw-agent-team/issues"
+  },
+  "keywords": [
+    "openclaw",
+    "agent-team",
+    "thou",
+    "ios",
+    "channel",
+    "plugin",
+    "companion"
+  ],
+  "type": "module",
+  "files": [
+    "dist/**",
+    "index.js",
+    "setup-entry.js",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "validate:outbound": "node --experimental-strip-types ./scripts/validate-outbound.ts",
+    "validate:session-routing": "node --experimental-strip-types ./scripts/validate-session-routing.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "openclaw": "2026.5.7",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.24"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ],
+    "setupEntry": "./setup-entry.js",
+    "channel": {
+      "id": "thou",
+      "label": "Thou",
+      "selectionLabel": "Thou (iOS)",
+      "detailLabel": "Thou iOS Native Channel",
+      "docsPath": "/channels/thou",
+      "docsLabel": "thou",
+      "blurb": "Native Thou iOS channel with explicit config, security, pairing, and transport boundaries.",
+      "systemImage": "iphone"
+    },
+    "install": {
+      "clawhubSpec": "clawhub:@zhengyi003/openclaw-agent-team",
+      "npmSpec": "@zhengyi003/openclaw-agent-team",
+      "localPath": ".",
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.3.24"
+    },
+    "compat": {
+      "pluginApi": "^1.0.0"
+    },
+    "build": {
+      "openclawVersion": "2026.5.7"
+    },
+    "bundle": {
+      "stageRuntimeDependencies": true
+    }
+  }
+}

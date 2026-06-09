@@ -1,0 +1,158 @@
+{
+  "id": "openclaw-agent-team",
+  "name": "OpenClaw Agent Team",
+  "description": "OpenClaw Agent Team plugin for Thou iOS channel workflows",
+  "version": "0.1.0",
+  "kind": "channel",
+  "channels": ["thou"],
+  "channelConfigs": {
+    "thou": {
+      "label": "Thou",
+      "description": "Thou iOS native channel settings",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "defaultAccount": {
+            "type": "string"
+          },
+          "dmPolicy": {
+            "type": "string",
+            "enum": ["pairing", "allowlist", "open", "disabled"]
+          },
+          "allowFrom": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "number" }
+              ]
+            }
+          },
+          "transport": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": ["sidecar-bridge", "native-node"]
+              },
+              "listenHost": {
+                "type": "string"
+              },
+              "listenPort": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "listenPath": {
+                "type": "string"
+              }
+            }
+          },
+          "bootstrap": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": ["sidecar-token", "gateway-device-pair"]
+              }
+            }
+          },
+          "outbound": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "textChunkLimit": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "accounts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "deviceLabel": {
+                  "type": "string"
+                },
+                "dmPolicy": {
+                  "type": "string",
+                  "enum": ["pairing", "allowlist", "open", "disabled"]
+                },
+                "allowFrom": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      { "type": "string" },
+                      { "type": "number" }
+                    ]
+                  }
+                },
+                "transport": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": ["sidecar-bridge", "native-node"]
+                    },
+                    "listenHost": {
+                      "type": "string"
+                    },
+                    "listenPort": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    "listenPath": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "bootstrap": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": ["sidecar-token", "gateway-device-pair"]
+                    }
+                  }
+                },
+                "outbound": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "textChunkLimit": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
