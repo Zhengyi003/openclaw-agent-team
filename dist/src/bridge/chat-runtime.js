@@ -1,9 +1,3 @@
-/**
- 兼容旧导入路径的 bridge chat runtime 导出。
-
- 目录分层后，真实实现位于 bridge/chat-runtime.ts。
- */
-export * from "./bridge/chat-runtime.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";

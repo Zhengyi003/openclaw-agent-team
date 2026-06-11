@@ -4,14 +4,16 @@ import {
   createAccountStatusSink,
   runPassiveAccountLifecycle,
 } from "openclaw/plugin-sdk/channel-lifecycle";
-import { ensureThouBridgeAuthToken } from "./bridge-auth.js";
+import { ensureThouBridgeAuthToken } from "../bridge/auth.js";
 import {
   buildThouConnectionSharePayload,
   buildThouConnectionShareText,
-} from "./connection-share.js";
-import { ensureAgentWorkGuiServer } from "./gui-server.js";
-import { getThouRuntime } from "./runtime.js";
-import { thouChatChannelBase } from "./channel.base.js";
+} from "../connection-share.js";
+import { ensureAgentWorkGuiServer } from "../gui/server.js";
+import { getThouRuntime } from "../runtime.js";
+import { deliverThouMedia, deliverThouText } from "../outbound.js";
+import { startThouBridgeForAccount } from "../bridge/runtime.js";
+import { thouChatChannelBase } from "./base.js";
 import {
   THOU_PAIRING_APPROVED_MESSAGE,
   THOU_DEFAULT_DM_POLICY,
@@ -19,8 +21,6 @@ import {
 import type { ResolvedThouAccount, ThouRootConfig } from "./types.js";
 import { collectThouChannelWarnings, createThouNotImplementedError } from "./transport.js";
 import { normalizeThouAllowEntry } from "./accounts.js";
-import { deliverThouMedia, deliverThouText } from "./outbound.js";
-import { startThouBridgeForAccount } from "./bridge-runtime.js";
 
 function normalizeThouMessagingTarget(raw: string): string | undefined {
   const trimmed = raw.trim();

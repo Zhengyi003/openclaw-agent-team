@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import os from "node:os";
 import { promisify } from "node:util";
-import type { ResolvedThouAccount } from "./types.js";
+import type { ResolvedThouAccount } from "./channel/types.js";
 
 const execFileAsync = promisify(execFile);
 

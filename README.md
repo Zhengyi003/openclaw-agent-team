@@ -38,18 +38,18 @@
 
 ## V1 职责划分
 
-- channel.base.ts：定义 Thou 作为 channel 插件的基础面，包括 meta、setup 入口、account/config 解析边界。
-- channel.ts：只负责把安全策略、配对语义、出站边界挂到基础 channel 上。
-- channel.setup.ts：setup-only 入口，只暴露 setup 所需的轻量表面。
-- accounts.ts：只负责把 channels.thou 配置解析为 ResolvedThouAccount，不处理运行时传输。
-- setup-core.ts：只负责把 setup 输入写回 config，不承担 transport 实现。
+- src/channel/base.ts：定义 Thou 作为 channel 插件的基础面，包括 meta、setup 入口、account/config 解析边界。
+- src/channel/entry.ts：负责把安全策略、配对语义、出站边界挂到基础 channel 上。
+- src/channel/setup.ts：setup-only 入口，只暴露 setup 所需的轻量表面。
+- src/channel/accounts.ts：只负责把 channels.thou 配置解析为 ResolvedThouAccount，不处理运行时传输。
+- src/setup/core.ts：只负责把 setup 输入写回 config，不承担 transport 实现。
 - runtime.ts：只负责保存 OpenClaw runtime 引用。
-- bridge-auth.ts：在 OpenClaw state 目录中为 Thou bridge 持久化 account 级 auth token。
-- bridge-runtime.ts：把 Thou bridge 绑定到当前插件宿主 account lifecycle。
-- bridge-server.ts：第一版真实 Thou WebSocket bridge，只处理设备鉴权与 outbound 投递。
+- src/bridge/auth.ts：在 OpenClaw state 目录中为 Thou bridge 持久化 account 级 auth token。
+- src/bridge/runtime.ts：把 Thou bridge 绑定到当前插件宿主 account lifecycle。
+- src/bridge/server.ts：第一版真实 Thou WebSocket bridge，只处理设备鉴权与 outbound 投递。
 - outbound.ts：现在既支持内存 sender，也支持真实的 Thou bridge sender。
-- transport.ts：明确声明“运输层仍未实现”，并集中放置当前阶段的边界告警。
-- types.ts：集中保存 Thou channel 第一版的配置和解析后类型。
+- src/channel/transport.ts：明确声明“运输层仍未实现”，并集中放置当前阶段的边界告警。
+- src/channel/types.ts：集中保存 Thou channel 第一版的配置和解析后类型。
 
 ## 当前边界判断
 
@@ -67,7 +67,7 @@
 - 自实现 Gateway WS 客户端细节
 - 启动脚本、局域网 IP 展示和神奇配对码 UI
 
-其中 `chat-start / chat.chunk / chat.done` 当前已经作为迁移期 bridge 协议被放进本项目的 `bridge-server.ts`，但它仍然只应被视为过渡 transport，而不是 Thou 长期 channel 接口的最终形态。
+其中 `chat-start / chat.chunk / chat.done` 当前已经作为迁移期 bridge 协议被放进本项目的 `src/bridge/server.ts`，但它仍然只应被视为过渡 transport，而不是 Thou 长期 channel 接口的最终形态。
 
 ## 下一步
 
@@ -104,7 +104,7 @@ OpenClaw Agent Team 的下一个原子任务不是继续加更多占位字段，
 
 这次新增的 `ws` 是 Node.js 侧的 WebSocket 运行库，只服务于当前插件项目里的两条代码路径：
 
-1. `src/bridge-server.ts`：第一版真实 Thou bridge，需要在 Node 侧启动 WebSocket server 并向设备推送 `chat-start / chat.chunk / chat.done`。
+1. `src/bridge/server.ts`：第一版真实 Thou bridge，需要在 Node 侧启动 WebSocket server 并向设备推送 `chat-start / chat.chunk / chat.done`。
 2. `scripts/validate-outbound.ts`：端到端验证脚本需要用 WebSocket client 连接 bridge，模拟一个已鉴权的 Thou 设备。
 
 它不是给 iOS 端安装的，也不是要求潜在用户手动额外执行“安装 ws”这一步。

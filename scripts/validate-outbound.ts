@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { WebSocket } from "ws";
-import { ThouBridgeServer } from "../src/bridge-server.ts";
+import { ThouBridgeServer } from "../src/bridge/server.ts";
 import {
   clearThouOutboundSender,
   createThouBridgeOutboundSender,

@@ -1,0 +1,10 @@
+export const DEFAULT_THOU_ACCOUNT_ID = "ios";
+export const THOU_DEFAULT_DEVICE_LABEL = "Thou iOS";
+export const THOU_DEFAULT_DM_POLICY = "pairing";
+export const THOU_DEFAULT_TRANSPORT_MODE = "sidecar-bridge";
+export const THOU_DEFAULT_LISTEN_HOST = "0.0.0.0";
+export const THOU_DEFAULT_LISTEN_PORT = 8080;
+export const THOU_DEFAULT_LISTEN_PATH = "/thou";
+export const THOU_DEFAULT_BOOTSTRAP_MODE = "sidecar-token";
+export const THOU_DEFAULT_TEXT_CHUNK_LIMIT = 1200;
+export const THOU_PAIRING_APPROVED_MESSAGE = "Thou device approved. Reconnect the app to continue in the shared OpenClaw session model.";

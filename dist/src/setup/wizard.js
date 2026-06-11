@@ -1,7 +1,7 @@
 import { formatDocsLink } from "openclaw/plugin-sdk/channel-setup";
-import { resolveDefaultThouAccountId, resolveThouAccount } from "./accounts.js";
-import { ensureThouBridgeAuthToken } from "./bridge/auth.js";
-import { buildThouConnectionSharePayload, buildThouConnectionShareText, } from "./connection-share.js";
+import { resolveDefaultThouAccountId, resolveThouAccount } from "../channel/accounts.js";
+import { ensureThouBridgeAuthToken } from "../bridge/auth.js";
+import { buildThouConnectionSharePayload, buildThouConnectionShareText, } from "../connection-share.js";
 export const thouSetupWizard = {
     channel: "thou",
     status: {

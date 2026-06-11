@@ -2,20 +2,20 @@ import type {
   ResolvedThouAccount,
   ThouConnectionProfileSnapshot,
   ThouMobileConnectionProfile,
-} from "./types.js";
+} from "../channel/types.js";
 import os from "node:os";
-import { ensureThouBridgeAuthToken } from "./bridge-auth.js";
-import { createThouConversationId } from "./bridge-chat-session.js";
+import { ensureThouBridgeAuthToken } from "./auth.js";
+import { createThouConversationId } from "./chat-session.js";
 import {
   createThouGatewayChatRun,
   createThouGatewaySession,
   listThouGatewayAgents,
   listThouGatewaySessions,
   loadThouGatewayHistory,
-} from "./bridge-chat-runtime.js";
-import { ThouBridgeServer } from "./bridge-server.js";
-import { registerThouBridge, tryGetThouBridge, unregisterThouBridge } from "./runtime.js";
-import { setThouBridgeDeliveryResolver } from "./outbound.js";
+} from "./chat-runtime.js";
+import { ThouBridgeServer } from "./server.js";
+import { registerThouBridge, tryGetThouBridge, unregisterThouBridge } from "../runtime.js";
+import { setThouBridgeDeliveryResolver } from "../outbound.js";
 
 export type ThouBridgeStatusSink = (patch: {
   running?: boolean;

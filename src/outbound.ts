@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { ThouBridgeServer } from "./bridge-server.js";
+import type { ThouBridgeServer } from "./bridge/server.js";
 
 const DEFAULT_THOU_ACCOUNT_ID = "ios";
 

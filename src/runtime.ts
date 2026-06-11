@@ -1,6 +1,6 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
 import { createPluginRuntimeStore } from "openclaw/plugin-sdk/runtime-store";
-import type { ThouBridgeServer } from "./bridge-server.js";
+import type { ThouBridgeServer } from "./bridge/server.js";
 
 const { setRuntime: setThouRuntime, getRuntime: getThouRuntime } =
   createPluginRuntimeStore<PluginRuntime>("Thou runtime not initialized");

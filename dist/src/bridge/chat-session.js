@@ -1,9 +1,3 @@
-/**
- 兼容旧导入路径的 bridge chat session 导出。
-
- 目录分层后，真实实现位于 bridge/chat-session.ts。
- */
-export * from "./bridge/chat-session.js";
 export function createThouConversationId(deviceId, agentId = "main") {
     void deviceId;
     return `agent:${String(agentId ?? "main").trim().toLowerCase() || "main"}:main`;
