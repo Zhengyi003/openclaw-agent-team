@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { readJsonBody, respondHtml, respondJson, respondText } from "./http.js";
 import { renderAgentWorkShellHtml } from "./render.js";
-import { buildAgentPreview, buildConnectSummary, createAgent, dismissAgent, humanizeAgentCreateError, humanizeAgentDismissError, listAgents, } from "./service.js";
+import { buildAgentPreview, buildConnectSummary, createAgent, dismissAgent, getBundledAvatarSvg, humanizeAgentCreateError, humanizeAgentDismissError, listAgents, } from "./service.js";
 import { buildConnectionCacheKey, DEFAULT_WORKSPACE_ROOT, GUI_API_BASE_PATH, GUI_ASSETS_PATH, GUI_BASE_PATH, PREFERRED_GUI_PORT, STABLE_GUI_URL, TEMPLATES, guiState, setGuiState, } from "./state.js";
 let guiServerPromise = null;
 export async function ensureAgentWorkGuiServer(params) {
@@ -80,6 +80,17 @@ async function routeAgentWorkRequest(req, res) {
         respondJson(res, 200, { ok: true });
         return;
     }
+    if (method === "GET" && pathname.startsWith(`${GUI_ASSETS_PATH}/avatars/`)) {
+        const avatarId = pathname.slice(`${GUI_ASSETS_PATH}/avatars/`.length).replace(/\.svg$/i, "");
+        const svg = getBundledAvatarSvg(avatarId);
+        if (svg) {
+            respondText(res, 200, svg, "image/svg+xml");
+        }
+        else {
+            respondJson(res, 404, { ok: false, error: "avatar not found" });
+        }
+        return;
+    }
     if (method === "GET" && pathname === `${GUI_API_BASE_PATH}/bootstrap`) {
         const { url } = await ensureAgentWorkGuiServer();
         respondJson(res, 200, {
@@ -121,7 +132,7 @@ async function routeAgentWorkRequest(req, res) {
             return;
         }
         try {
-            await createAgent(preview);
+            await createAgent(preview, payload);
         }
         catch (error) {
             const stderr = typeof error === "object" && error && "stderr" in error

@@ -8,7 +8,7 @@ A desktop plugin for [OpenClaw](https://github.com/anthropics/openclaw) that kee
 
 OpenClaw Agent Team lives at `http://127.0.0.1:38127/agent-team/` on your Mac. It does three things:
 
-1. **Recruit** — create a new work agent through a guided flow that wraps the official OpenClaw CLI.
+1. **Recruit** — create a new work agent through a guided flow that wraps the official OpenClaw CLI. Choose from three role templates (Scout, Operator, Auditor) designed as a lightweight operating team for solo founders.
 2. **Dismiss** — scan the current agent roster and remove agents you no longer need.
 3. **iPhone Connection** — prepare a single connection line that Thou on iPhone can paste to initiate the bridge.
 

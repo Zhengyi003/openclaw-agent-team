@@ -1,8 +1,10 @@
 import {
   DEFAULT_WORKSPACE_ROOT,
   GUI_API_BASE_PATH,
+  GUI_ASSETS_PATH,
   GUI_PRODUCT_NAME,
   GUI_SHORT_NAME,
+  AVATAR_MAX_BYTES,
 } from "./state.js";
 
 export function renderAgentWorkShellHtml(): string {
@@ -238,6 +240,61 @@ export function renderAgentWorkShellHtml(): string {
         font-size: 18px;
       }
 
+      .template-emoji {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+
+      .avatar-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .avatar-option {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        border: 2px solid var(--border);
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: 140ms ease;
+        padding: 6px;
+      }
+
+      .avatar-option:hover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .avatar-option.is-selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(84, 126, 210, 0.18);
+      }
+
+      .avatar-option img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .avatar-option.upload-trigger {
+        border-style: dashed;
+        color: var(--muted);
+        font-size: 20px;
+        font-weight: 300;
+      }
+
+      .avatar-option.upload-trigger:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
       .field {
         display: grid;
         gap: 8px;
@@ -414,9 +471,12 @@ export function renderAgentWorkShellHtml(): string {
         activeTab: 'recruit',
         createStep: 'positioning',
         draft: {
-          templateId: 'coding',
+          templateId: 'scout',
           name: '',
           workspaceRoot: '${DEFAULT_WORKSPACE_ROOT.replace(/'/g, "\\'")}',
+          avatarMode: 'preset',
+          avatarValue: 'scout',
+          avatarDataUri: '',
         },
         agents: [],
         preview: null,
@@ -543,12 +603,14 @@ export function renderAgentWorkShellHtml(): string {
         if (state.createStep === 'positioning') {
           mainMarkup = '<div class="panel-grid">' +
             '<section class="panel">' +
-              '<h2 class="section-title">Recruit a new work agent</h2>' +
-              '<p class="section-copy">This tab keeps the creation flow focused. Pick the posture first, then move through name and workspace without management noise mixed in.</p>' +
+              '<h2 class="section-title">Choose a role for the new agent</h2>' +
+              '<p class="section-copy">Each role brings its own perspective and working style. Pick the one that matches what this agent should do day to day.</p>' +
               '<div class="template-list">' +
                 state.bootstrap.templates.map((template) => {
                   const selectedClass = template.id === state.draft.templateId ? 'template-card is-selected' : 'template-card';
+                  const emoji = template.identityDefaults ? template.identityDefaults.emoji : '';
                   return '<button class="' + selectedClass + '" data-template="' + template.id + '">' +
+                    '<div class="template-emoji">' + escapeHtml(emoji) + '</div>' +
                     '<h3>' + escapeHtml(template.label) + '</h3>' +
                     '<div class="small-copy">' + escapeHtml(template.description) + '</div>' +
                   '</button>';
@@ -561,7 +623,7 @@ export function renderAgentWorkShellHtml(): string {
             '</section>' +
             '<aside class="side-panel">' +
               '<h3 class="section-title">Flow snapshot</h3>' +
-              '<p class="section-copy">Recruit stays narrow on purpose. Dismiss lives in its own tab so this page can stay about drafting one new agent at a time.</p>' +
+              '<p class="section-copy">Each role template seeds IDENTITY.md, SOUL.md, and USER.md into the new workspace so the agent starts with a clear sense of who it is.</p>' +
               '<div class="stats">' +
                 '<div class="stat"><div class="stat-label">Active tab</div><div class="stat-value">Recruit</div></div>' +
                 '<div class="stat"><div class="stat-label">Current step</div><div class="stat-value">Positioning</div></div>' +
@@ -574,18 +636,25 @@ export function renderAgentWorkShellHtml(): string {
         if (state.createStep === 'name') {
           mainMarkup = '<div class="panel-grid">' +
             '<section class="panel">' +
-              '<h2 class="section-title">Name the work agent</h2>' +
-              '<p class="section-copy">We derive the agent id and workspace preview from one human-readable name.</p>' +
-              '<div class="field"><label for="agent-name">Agent name</label><input id="agent-name" value="' + escapeHtml(state.draft.name) + '" placeholder="Research Lead" /></div>' +
+              '<h2 class="section-title">Name &amp; Identity</h2>' +
+              '<p class="section-copy">Give the agent a name, then pick or upload an avatar. Both help you recognize who you are talking to at a glance.</p>' +
+              '<div class="field"><label for="agent-name">Agent name</label><input id="agent-name" value="' + escapeHtml(state.draft.name) + '" placeholder="e.g. Molly, John" /></div>' +
+              '<div class="field"><label>Avatar</label>' +
+                renderAvatarPicker() +
+              '</div>' +
               renderIssues(issues) +
               '<div class="actions">' +
                 '<button class="button" data-action="back-name">Back</button>' +
-                '<button class="button primary" data-action="next-name" ' + (hasBlocking ? 'disabled' : '') + '>Continue</button>' +
+                '<button class="button primary" data-action="next-name">Continue</button>' +
               '</div>' +
             '</section>' +
             '<aside class="side-panel">' +
-              '<h3 class="section-title">Derived preview</h3>' +
-              renderPreviewSummary(preview) +
+              '<h3 class="section-title">Name &amp; avatar</h3>' +
+              '<div class="summary-list">' +
+                '<div class="summary-row"><div class="summary-label">Agent name</div><div class="summary-value">Pick a name like you are naming a new team member, not a tool. The ID and workspace folder are derived from it automatically.</div></div>' +
+                '<div class="summary-row"><div class="summary-label">Avatar</div><div class="summary-value">Helps you recognize this agent in chat and the agent list. Pick a preset or upload your own.</div></div>' +
+                '<div class="summary-row"><div class="summary-label">Example</div><div class="summary-value mono">ID: research-lead → Workspace: ~/Documents/OpenClaw/Research Lead</div></div>' +
+              '</div>' +
             '</aside>' +
           '</div>';
         }
@@ -596,16 +665,19 @@ export function renderAgentWorkShellHtml(): string {
               '<h2 class="section-title">Confirm workspace root</h2>' +
               '<p class="section-copy">The agent gets its own workspace under a shared employee-office root.</p>' +
               '<div class="field"><label for="workspace-root">Root workspace folder</label><input id="workspace-root" value="' + escapeHtml(state.draft.workspaceRoot) + '" placeholder="~/Documents/Agent Workspaces" /></div>' +
-              renderIssues(issues) +
+              (state.createError ? '<div class="notice error">' + escapeHtml(state.createError) + '</div>' : '') +
               '<div class="actions">' +
                 '<button class="button" data-action="back-workspace">Back</button>' +
-                '<button class="button primary" data-action="create-agent" ' + (hasBlocking ? 'disabled' : '') + '>Create Agent</button>' +
+                '<button class="button primary" data-action="create-agent">Create Agent</button>' +
               '</div>' +
-              (state.createError ? '<div class="notice error">' + escapeHtml(state.createError) + '</div>' : '') +
             '</section>' +
             '<aside class="side-panel">' +
-              '<h3 class="section-title">Creation target</h3>' +
-              renderPreviewSummary(preview) +
+              '<h3 class="section-title">Workspace location</h3>' +
+              '<div class="summary-list">' +
+                '<div class="summary-row"><div class="summary-label">Root</div><div class="summary-value">All agent workspaces live under this shared root. Default is ~/Documents/OpenClaw.</div></div>' +
+                '<div class="summary-row"><div class="summary-label">Result</div><div class="summary-value mono">' + escapeHtml(state.draft.workspaceRoot) + '/' + escapeHtml(state.draft.name || 'New Agent') + '</div></div>' +
+                '<div class="summary-row"><div class="summary-label">Tip</div><div class="summary-value">You can use ~ as a shortcut for your home directory.</div></div>' +
+              '</div>' +
             '</aside>' +
           '</div>';
         }
@@ -634,25 +706,24 @@ export function renderAgentWorkShellHtml(): string {
         for (const button of contentEl.querySelectorAll('[data-template]')) {
           button.addEventListener('click', async () => {
             state.draft.templateId = button.getAttribute('data-template');
+            state.draft.avatarMode = 'preset';
+            state.draft.avatarValue = state.draft.templateId;
+            state.draft.avatarDataUri = '';
             render();
           });
         }
 
         const nameInput = document.getElementById('agent-name');
         if (nameInput) {
-          nameInput.addEventListener('input', async (event) => {
+          nameInput.addEventListener('input', (event) => {
             state.draft.name = event.target.value;
-            await refreshPreview();
-            render();
           });
         }
 
         const workspaceInput = document.getElementById('workspace-root');
         if (workspaceInput) {
-          workspaceInput.addEventListener('input', async (event) => {
+          workspaceInput.addEventListener('input', (event) => {
             state.draft.workspaceRoot = event.target.value;
-            await refreshPreview();
-            render();
           });
         }
 
@@ -661,13 +732,22 @@ export function renderAgentWorkShellHtml(): string {
           state.createError = '';
           state.dismissError = '';
           state.createStep = 'positioning';
-          state.draft = { templateId: 'coding', name: '', workspaceRoot: state.bootstrap.defaultWorkspaceRoot };
+          state.draft = { templateId: 'scout', name: '', workspaceRoot: state.bootstrap.defaultWorkspaceRoot, avatarMode: 'preset', avatarValue: 'scout', avatarDataUri: '' };
           await refreshPreview();
           render();
         });
         bindAction('next-positioning', () => { state.createStep = 'name'; render(); });
         bindAction('back-name', () => { state.createStep = 'positioning'; render(); });
-        bindAction('next-name', () => { state.createStep = 'workspace'; render(); });
+        bindAction('next-name', async () => {
+          await refreshPreview();
+          const issues = Array.isArray(state.preview.issues) ? state.preview.issues : [];
+          if (issues.some(function (i) { return i.blocking; })) {
+            render();
+            return;
+          }
+          state.createStep = 'workspace';
+          render();
+        });
         bindAction('back-workspace', () => { state.createStep = 'name'; render(); });
         bindAction('open-connect', async () => {
           state.activeTab = 'connect';
@@ -681,19 +761,26 @@ export function renderAgentWorkShellHtml(): string {
           state.dismissError = '';
           state.createStep = 'positioning';
           state.draft.name = '';
+          state.draft.avatarMode = 'preset';
+          state.draft.avatarValue = state.draft.templateId;
+          state.draft.avatarDataUri = '';
           await refreshPreview();
           render();
         });
         bindAction('create-agent', async () => {
           state.createError = '';
+          const body = {
+            templateId: state.draft.templateId,
+            name: state.draft.name,
+            workspaceRoot: state.draft.workspaceRoot,
+            avatarMode: state.draft.avatarMode,
+            avatarValue: state.draft.avatarValue,
+            avatarDataUri: state.draft.avatarDataUri || undefined,
+          };
           const response = await fetch('${GUI_API_BASE_PATH}/agents', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              templateId: state.draft.templateId,
-              name: state.draft.name,
-              workspaceRoot: state.draft.workspaceRoot,
-            }),
+            body: JSON.stringify(body),
           });
           const result = await response.json();
           if (!response.ok) {
@@ -867,6 +954,65 @@ export function renderAgentWorkShellHtml(): string {
       function titleForTemplate(templateId) {
         const template = (state.bootstrap.templates || []).find((entry) => entry.id === templateId);
         return template ? template.label : 'Unselected';
+      }
+
+      function renderAvatarPicker() {
+        const presetIds = (state.bootstrap.templates || []).map(function (t) { return t.id; });
+        var html = '<div class="avatar-picker">';
+        for (var i = 0; i < presetIds.length; i++) {
+          var pid = presetIds[i];
+          var selectedClass = state.draft.avatarMode === 'preset' && state.draft.avatarValue === pid ? 'avatar-option is-selected' : 'avatar-option';
+          html += '<button class="' + selectedClass + '" data-avatar-preset="' + pid + '">' +
+            '<img src="' + escapeHtml('${GUI_ASSETS_PATH}/avatars/' + pid + '.svg') + '" alt="' + escapeHtml(titleForTemplate(pid)) + '" />' +
+          '</button>';
+        }
+        // Upload trigger
+        var uploadSelected = state.draft.avatarMode === 'upload' && state.draft.avatarDataUri;
+        var uploadClass = uploadSelected ? 'avatar-option is-selected' : 'avatar-option upload-trigger';
+        html += '<button class="' + uploadClass + '" data-avatar-upload="1" title="Upload custom image">' +
+          (uploadSelected ? '<img src="' + escapeHtml(state.draft.avatarDataUri) + '" alt="Custom" />' : '+') +
+        '</button>';
+        html += '<input type="file" id="avatar-file-input" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none" />';
+        html += '</div>';
+        html += '<div class="small-copy" style="margin-top:6px">' + (state.draft.avatarMode === 'upload' ? 'Custom image selected' : 'Pick a preset or upload your own') + '</div>';
+
+        // Attach handlers after DOM insertion
+        setTimeout(function () {
+          var presetBtns = document.querySelectorAll('[data-avatar-preset]');
+          for (var b = 0; b < presetBtns.length; b++) {
+            presetBtns[b].addEventListener('click', function () {
+              state.draft.avatarMode = 'preset';
+              state.draft.avatarValue = this.getAttribute('data-avatar-preset');
+              state.draft.avatarDataUri = '';
+              render();
+            });
+          }
+          var uploadBtn = document.querySelector('[data-avatar-upload]');
+          var fileInput = document.getElementById('avatar-file-input');
+          if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', function () {
+              fileInput.click();
+            });
+            fileInput.addEventListener('change', function () {
+              var file = fileInput.files && fileInput.files[0];
+              if (!file) return;
+              if (file.size > ${AVATAR_MAX_BYTES}) {
+                alert('Image too large. Maximum size is ' + Math.round(${AVATAR_MAX_BYTES} / 1024 / 1024 * 10) / 10 + ' MB.');
+                return;
+              }
+              var reader = new FileReader();
+              reader.onload = function () {
+                state.draft.avatarMode = 'upload';
+                state.draft.avatarValue = '';
+                state.draft.avatarDataUri = reader.result;
+                render();
+              };
+              reader.readAsDataURL(file);
+            });
+          }
+        }, 0);
+
+        return html;
       }
 
       boot().catch((error) => {

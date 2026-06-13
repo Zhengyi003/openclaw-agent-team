@@ -8,6 +8,7 @@ import {
   buildConnectSummary,
   createAgent,
   dismissAgent,
+  getBundledAvatarSvg,
   humanizeAgentCreateError,
   humanizeAgentDismissError,
   listAgents,
@@ -122,6 +123,17 @@ async function routeAgentWorkRequest(req: IncomingMessage, res: ServerResponse):
     return;
   }
 
+  if (method === "GET" && pathname.startsWith(`${GUI_ASSETS_PATH}/avatars/`)) {
+    const avatarId = pathname.slice(`${GUI_ASSETS_PATH}/avatars/`.length).replace(/\.svg$/i, "");
+    const svg = getBundledAvatarSvg(avatarId);
+    if (svg) {
+      respondText(res, 200, svg, "image/svg+xml");
+    } else {
+      respondJson(res, 404, { ok: false, error: "avatar not found" });
+    }
+    return;
+  }
+
   if (method === "GET" && pathname === `${GUI_API_BASE_PATH}/bootstrap`) {
     const { url } = await ensureAgentWorkGuiServer();
     respondJson(res, 200, {
@@ -169,7 +181,7 @@ async function routeAgentWorkRequest(req: IncomingMessage, res: ServerResponse):
     }
 
     try {
-      await createAgent(preview);
+      await createAgent(preview, payload);
     } catch (error) {
       const stderr =
         typeof error === "object" && error && "stderr" in error

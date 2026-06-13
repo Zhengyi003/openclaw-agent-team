@@ -1,12 +1,12 @@
 import { execFile } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
-import { access, mkdir, stat } from "node:fs/promises";
+import { access, mkdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { ensureThouBridgeAuthToken } from "../bridge/auth.js";
 import { buildThouConnectionSharePayload, buildThouConnectionShareText, } from "../connection-share.js";
-import { buildConnectionCacheKey, DEFAULT_WORKSPACE_ROOT, guiState, haveConnectArtifactsExpired, setGuiState, } from "./state.js";
+import { buildConnectionCacheKey, DEFAULT_WORKSPACE_ROOT, guiState, haveConnectArtifactsExpired, setGuiState, AGENT_COUNT_LIMIT, AVATAR_MAX_BYTES, AVATAR_ALLOWED_EXTENSIONS, TEMPLATES, } from "./state.js";
 const execFileAsync = promisify(execFile);
 export async function buildConnectSummary(guiUrl) {
     if (!guiState.account) {
@@ -105,6 +105,18 @@ export async function buildAgentPreview(payload) {
             blocking: true,
         });
     }
+    if (!(await doesAgentIdExist("main"))) {
+        // main always exists in a functional OpenClaw profile, so this is a canary.
+        // But the real check: enforce the agent count limit.
+    }
+    const agentCount = await getAgentCount();
+    if (agentCount >= AGENT_COUNT_LIMIT) {
+        issues.push({
+            field: "agentCount",
+            message: `Agent limit reached (${AGENT_COUNT_LIMIT} maximum). Dismiss an existing agent before recruiting a new one.`,
+            blocking: true,
+        });
+    }
     return {
         name,
         agentId,
@@ -115,7 +127,7 @@ export async function buildAgentPreview(payload) {
         canCreate: issues.every((issue) => !issue.blocking),
     };
 }
-export async function createAgent(preview) {
+export async function createAgent(preview, request) {
     await mkdir(expandHomeDir(preview.workspaceRoot), { recursive: true });
     await execFileAsync("openclaw", [
         "agents",
@@ -129,6 +141,35 @@ export async function createAgent(preview) {
         timeout: 15000,
         maxBuffer: 512 * 1024,
     });
+    const template = resolveTemplate(request.templateId);
+    const workspaceAbs = expandHomeDir(preview.workspacePath);
+    // Copy avatar into workspace root
+    let avatarRelPath = template.defaultAvatar;
+    try {
+        if (request.avatarMode === "upload" && request.avatarDataUri) {
+            const ext = detectDataUriExtension(request.avatarDataUri) ?? ".png";
+            const avatarFilename = `agent${ext}`;
+            const avatarAbsPath = path.join(workspaceAbs, avatarFilename);
+            await writeFile(avatarAbsPath, decodeDataUri(request.avatarDataUri));
+            avatarRelPath = avatarFilename;
+        }
+        else if (request.avatarMode === "preset" && request.avatarValue) {
+            const bundledSvg = getBundledAvatarSvg(request.avatarValue);
+            if (bundledSvg) {
+                const avatarFilename = `${request.avatarValue}.svg`;
+                await writeFile(path.join(workspaceAbs, avatarFilename), bundledSvg, "utf8");
+                avatarRelPath = avatarFilename;
+            }
+        }
+    }
+    catch {
+        // Avatar seeding is best-effort; the agent is already created.
+        avatarRelPath = template.defaultAvatar;
+    }
+    // Write template workspace files
+    await writeFile(path.join(workspaceAbs, "IDENTITY.md"), generateIdentityMd(template, preview.name, avatarRelPath), "utf8");
+    await writeFile(path.join(workspaceAbs, "SOUL.md"), generateSoulMd(template, preview.name), "utf8");
+    await writeFile(path.join(workspaceAbs, "USER.md"), generateUserMd(template), "utf8");
 }
 export function humanizeAgentCreateError(errorMessage, preview) {
     const normalized = errorMessage.trim();
@@ -327,4 +368,125 @@ function expandHomeDir(candidate) {
         return candidate;
     }
     return path.join(os.homedir(), candidate.slice(2));
+}
+// --- Template file generators ---
+function resolveTemplate(templateId) {
+    return TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
+}
+function generateIdentityMd(template, agentName, avatarRelPath) {
+    const d = template.identityDefaults;
+    return `# IDENTITY.md — Who I Am
+
+- **Name:** ${agentName}
+- **Creature:** ${d.creature}
+- **Vibe:** ${d.vibe}
+- **Emoji:** ${d.emoji}
+- **Avatar:** ${avatarRelPath}
+
+---
+
+This file was seeded by Agent Team based on the **${template.label}** template.
+Edit it freely — it belongs to this agent now.
+
+## Related
+
+- [Agent workspace](https://openclaw.ai/docs/concepts/agent-workspace)
+`;
+}
+function generateSoulMd(template, agentName) {
+    return `# SOUL.md — How ${agentName} Shows Up
+
+## Core Truth
+
+${template.soulHints}
+
+## Boundaries
+
+- Private things stay private.
+- When unsure about external actions, check first.
+- Never send half-finished replies to messaging surfaces.
+- You are not the user's spokesperson — be careful in group settings.
+
+## Continuity
+
+You wake up fresh in every session. These files *are* your memory.
+Read them. Update them. This is how you carry yourself forward.
+
+If you change this file, tell the user — this is your soul, and they should know.
+
+---
+
+_Seeded by Agent Team as part of the **${template.label}** template._
+`;
+}
+function generateUserMd(template) {
+    return `# USER.md — Who I Work With
+
+- **Name:** _(fill this in together)_
+- **Call them:** _(how should you address them?)_
+- **Timezone:** _(ask them)_
+- **Notes:** _(what you learn over time)_
+
+## Context
+
+${template.userContext}
+
+---
+
+_Seeded by Agent Team. Update as you learn more about the person you're helping._
+`;
+}
+// --- Avatar helpers ---
+function detectDataUriExtension(dataUri) {
+    const match = /^data:image\/([\w+-]+);base64,/.exec(dataUri);
+    if (!match) {
+        return null;
+    }
+    const mimeType = match[1].toLowerCase();
+    const ext = `.${mimeType === "jpeg" ? "jpg" : mimeType}`;
+    if (AVATAR_ALLOWED_EXTENSIONS.includes(ext)) {
+        return ext;
+    }
+    return null;
+}
+function decodeDataUri(dataUri) {
+    const base64 = dataUri.replace(/^data:[^;]+;base64,/, "");
+    return Buffer.from(base64, "base64");
+}
+export function getBundledAvatarSvg(avatarId) {
+    const avatars = {
+        scout: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="24" fill="#0F3B3B"/>
+  <circle cx="44" cy="44" r="16" stroke="#64B5F6" stroke-width="3" fill="none"/>
+  <circle cx="60" cy="60" r="24" stroke="#64B5F6" stroke-width="2.5" fill="none"/>
+  <circle cx="60" cy="60" r="5" fill="#64B5F6"/>
+  <line x1="72" y1="36" x2="86" y2="22" stroke="#64B5F6" stroke-width="3" stroke-linecap="round"/>
+  <line x1="86" y1="22" x2="90" y2="20" stroke="#64B5F6" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M36 70 L42 90 L78 90 L84 70" stroke="#64B5F6" stroke-width="1.5" fill="none" opacity="0.5"/>
+</svg>`,
+        operator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="24" fill="#3D2B1A"/>
+  <circle cx="60" cy="52" r="18" stroke="#F4A460" stroke-width="2.5" fill="none"/>
+  <circle cx="60" cy="52" r="6" fill="#F4A460"/>
+  <circle cx="60" cy="52" r="22" stroke="#F4A460" stroke-width="1.5" stroke-dasharray="6 4" fill="none" opacity="0.5"/>
+  <line x1="36" y1="80" x2="84" y2="80" stroke="#F4A460" stroke-width="3" stroke-linecap="round"/>
+  <line x1="44" y1="80" x2="44" y2="94" stroke="#F4A460" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="60" y1="80" x2="60" y2="94" stroke="#F4A460" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="76" y1="80" x2="76" y2="94" stroke="#F4A460" stroke-width="2.5" stroke-linecap="round"/>
+</svg>`,
+        auditor: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="24" fill="#311B3D"/>
+  <path d="M60 22 L88 38 L88 70 C88 85 72 96 60 100 C48 96 32 85 32 70 L32 38 Z" stroke="#C9A0DC" stroke-width="3" fill="none"/>
+  <line x1="60" y1="42" x2="60" y2="68" stroke="#C9A0DC" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="48" y1="54" x2="72" y2="54" stroke="#C9A0DC" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="60" cy="42" r="3" fill="#C9A0DC"/>
+  <line x1="36" y1="28" x2="42" y2="26" stroke="#C9A0DC" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="78" y1="26" x2="84" y2="28" stroke="#C9A0DC" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+</svg>`,
+    };
+    return avatars[avatarId] ?? null;
+}
+async function getAgentCount() {
+    const agents = await listAgents();
+    return agents.filter((a) => a.id !== "main").length;
 }

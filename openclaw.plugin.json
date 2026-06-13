@@ -2,7 +2,7 @@
   "id": "openclaw-agent-team",
   "name": "OpenClaw Agent Team",
   "description": "Recruit and manage OpenClaw work agents through a guided web GUI. Includes a copy-ready iPhone connection line for Thou.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "kind": "channel",
   "channels": ["thou"],
   "channelConfigs": {

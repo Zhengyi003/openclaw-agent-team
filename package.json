@@ -1,6 +1,6 @@
 {
   "name": "@zhengyi003/openclaw-agent-team",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "description": "Recruit and manage OpenClaw work agents through a guided web GUI. Includes a copy-ready iPhone connection line for Thou.",
   "license": "Apache-2.0",
