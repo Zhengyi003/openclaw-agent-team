@@ -1,7 +1,7 @@
 {
   "id": "openclaw-agent-team",
   "name": "OpenClaw Agent Team",
-  "description": "OpenClaw Agent Team plugin for Thou iOS channel workflows",
+  "description": "Recruit and manage OpenClaw work agents through a guided web GUI. Includes a copy-ready iPhone connection line for Thou.",
   "version": "0.1.0",
   "kind": "channel",
   "channels": ["thou"],

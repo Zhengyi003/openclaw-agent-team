@@ -2,7 +2,7 @@
   "name": "@zhengyi003/openclaw-agent-team",
   "version": "0.1.0",
   "private": false,
-  "description": "OpenClaw Agent Team plugin for Thou iOS channel workflows",
+  "description": "Recruit and manage OpenClaw work agents through a guided web GUI. Includes a copy-ready iPhone connection line for Thou.",
   "license": "Apache-2.0",
   "author": "Lizhengyi",
   "repository": {
