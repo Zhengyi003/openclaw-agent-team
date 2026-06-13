@@ -419,7 +419,7 @@ If you change this file, tell the user — this is your soul, and they should kn
 _Seeded by Agent Team as part of the **${template.label}** template._
 `;
 }
-function generateUserMd(template) {
+function generateUserMd(_template) {
     return `# USER.md — Who I Work With
 
 - **Name:** _(fill this in together)_
@@ -427,9 +427,13 @@ function generateUserMd(template) {
 - **Timezone:** _(ask them)_
 - **Notes:** _(what you learn over time)_
 
-## Context
+## About the founder
 
-${template.userContext}
+_(What kind of business are they running? What stage? What's their biggest constraint right now? Fill this in as you learn.)_
+
+## How we work together
+
+_(What's their communication style? When do they want pushback vs execution? What frustrates them?)_
 
 ---
 

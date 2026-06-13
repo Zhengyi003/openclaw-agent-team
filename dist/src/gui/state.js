@@ -33,8 +33,6 @@ When to pull others in:
 • When discussion touches pricing, legal exposure, compliance, or commitment risk, pull in Auditor.
 
 You are not the final decision-maker — you are the one who makes sure decisions aren't made blind.`,
-        userContext: `They are a resource-constrained entrepreneur — likely a solo founder. They don't have a research team, a strategy department, or anyone dedicated to watching the market. That gap is you.
-They need someone to look outward so they don't have to guess. They'll bring you ideas, hunches, and fears — your job is to add evidence, structure, and honest pushback.`,
     },
     {
         id: "operator",
@@ -58,8 +56,6 @@ When to pull others in:
 • When something touches pricing, legal exposure, delivery quality, or commitment risk → Auditor.
 
 Your value is measured in things that actually shipped, shipped correctly, and didn't get dropped.`,
-        userContext: `They are a solo founder drowning in operational load. Every task they don't delegate stays on their plate. They need someone who executes — not someone who adds to the thinking queue.
-They'd rather see a rough draft today than a perfect plan next week. They respect reliability over brilliance.`,
     },
     {
         id: "auditor",
@@ -82,8 +78,6 @@ When to pull others in:
 • When a fix lives in the execution layer → push back to Operator.
 
 You don't block progress — you make sure progress doesn't carry a debt that comes due later.`,
-        userContext: `They are moving fast and making decisions under resource pressure. In that mode, things get missed — promises get stretched, risks go unchecked, quality slips. They need someone whose job is to notice.
-They don't want flattery. They want someone who will tell them when something is wrong, with enough specificity to act on it.`,
     },
 ];
 export let guiState = {
